@@ -1,35 +1,85 @@
+/**
+ * Copyright (c) 2022 Raspberry Pi (Trading) Ltd.
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 #include <stdio.h>
 #include <pico/stdlib.h>
-#include <stdint.h>
-#include <unity.h>
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+
 #include "unity_config.h"
+#include <unity.h>
 
-void setUp(void) {}
+SemaphoreHandle_t semaphore;
 
-void tearDown(void) {}
+void priorityInversionBinary() {
+    xSemaphoreTake(semaphore, portMAX_DELAY);
+    busy_wait_us(1000);
+    xSemaphoreGive(semaphore);
 
-void test_variable_assignment()
-{
-    int x = 1;
-    TEST_ASSERT_TRUE_MESSAGE(x == 1,"Variable assignment failed.");
+    semaphore = xSemaphoreCreateBinary();
+    vSemaphoreDelete(semaphore);
 }
 
-void test_multiplication(void)
-{
-    int x = 30;
-    int y = 6;
-    int z = x / y;
-    TEST_ASSERT_TRUE_MESSAGE(z == 5, "Multiplication of two integers returned incorrect value.");
+void priorityInversionMutex() {
+    xSemaphoreTake(semaphore, portMAX_DELAY);
+    busy_wait_us(1000);
+    xSemaphoreGive(semaphore);
+
+    semaphore = xSemaphoreCreateMutex();
+    vSemaphoreDelate(semaphore);
 }
 
-int main (void)
+void busy_busy(void) {
+    for(int i = 0; ; i++) {
+
+    }
+}
+
+void busy_yield(void) {
+    for(int i = 0; ; i++) {
+        taskYIELD();
+    }
+}
+
+void testSamePriorityBothBusyBusy() {
+    
+}
+
+void testSamePriorityBothBusyYield() {
+
+}
+
+void testSamePriorityBusyBusy_BusyYield() {
+
+}
+
+void testDifferentPriorityBothBusyBusy() {
+
+}
+
+void testDifferentPriorityBothBusyYield() {
+
+}
+
+void tests() {
+    UNITY_BEGIN();
+    RUN_TEST(testSamePriorityBothBusyBusy);
+    RUN_TEST(testSamePriorityBothBusyYield);
+    RUN_TEST(testSamePriorityBusyBusy_BusyYield);
+    RUN_TEST(testDifferentPriorityBothBusyBusy);
+    RUN_TEST(testDifferentPriorityBothBusyYield);
+    UNITY_END();
+}
+
+int main( void )
 {
     stdio_init_all();
-    sleep_ms(5000); // Give time for TTY to attach.
-    printf("Start tests\n");
-    UNITY_BEGIN();
-    RUN_TEST(test_variable_assignment);
-    RUN_TEST(test_multiplication);
-    sleep_ms(5000);
-    return UNITY_END();
+    TaskHandle_t main_handle;
+    xTaskCreate(tests, "Tests", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+10, &main_handle);
+    vTaskStartScheduler();
+    return 0;
 }
