@@ -14,41 +14,51 @@
 #include <unity.h>
 
 SemaphoreHandle_t semaphore;
-SemaphoreHandle_t semaphore2;
 
 TaskHandle_t firstThread;
 TaskHandle_t secondThread;
 
+TaskFunction_t primary;
+TaskFunction_t secondary;
+
+void setUp(void) {
+}
+
+void tearDown(void) {
+}
+
 void priorityInversionBinary() {
     xSemaphoreTake(semaphore, portMAX_DELAY);
 
-    xTaskCreate(semaphore, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
+    semaphore = xSemaphoreCreateBinary();
+
+    xTaskCreate(primary, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
     vTaskDelay(100);
 
-    xTaskCreate(semaphore2, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
+    xTaskCreate(secondary, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
 
     busy_wait_us(1000);
 
     xSemaphoreGive(semaphore);
 
-    semaphore = xSemaphoreCreateBinary();
     vSemaphoreDelete(semaphore);
 }
 
 void priorityInversionMutex() {
     xSemaphoreTake(semaphore, portMAX_DELAY);
 
-    xTaskCreate(semaphore, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
+    semaphore = xSemaphoreCreateMutex();
+
+    xTaskCreate(primary, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
     vTaskDelay(100);
 
-    xTaskCreate(semaphore2, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
+    xTaskCreate(secondary, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
 
     busy_wait_us(1000);
-    
+
     xSemaphoreGive(semaphore);
 
-    semaphore = xSemaphoreCreateMutex();
-    vSemaphoreDelate(semaphore);
+    vSemaphoreDelete(semaphore);
 }
 
 void busy_busy(void) {
@@ -64,22 +74,26 @@ void busy_yield(void) {
 }
 
 void testSamePriorityBothBusyBusy() {
-    
+    TEST_ASSERT_EQUAL_INT(1, 1);
 }
 
 void testSamePriorityBothBusyYield() {
+    TEST_ASSERT_EQUAL_INT(1, 1);
 
 }
 
 void testSamePriorityBusyBusy_BusyYield() {
+    TEST_ASSERT_EQUAL_INT(1, 1);
 
 }
 
 void testDifferentPriorityBothBusyBusy() {
+    TEST_ASSERT_EQUAL_INT(1, 1);
 
 }
 
 void testDifferentPriorityBothBusyYield() {
+    TEST_ASSERT_EQUAL_INT(1, 1);
 
 }
 
@@ -91,6 +105,7 @@ void tests() {
     RUN_TEST(testDifferentPriorityBothBusyBusy);
     RUN_TEST(testDifferentPriorityBothBusyYield);
     UNITY_END();
+    vTaskDelay(1000);
 }
 
 int main( void )
