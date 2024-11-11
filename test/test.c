@@ -14,10 +14,21 @@
 #include <unity.h>
 
 SemaphoreHandle_t semaphore;
+SemaphoreHandle_t semaphore2;
+
+TaskHandle_t firstThread;
+TaskHandle_t secondThread;
 
 void priorityInversionBinary() {
     xSemaphoreTake(semaphore, portMAX_DELAY);
+
+    xTaskCreate(semaphore, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
+    vTaskDelay(100);
+
+    xTaskCreate(semaphore2, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
+
     busy_wait_us(1000);
+
     xSemaphoreGive(semaphore);
 
     semaphore = xSemaphoreCreateBinary();
@@ -26,7 +37,14 @@ void priorityInversionBinary() {
 
 void priorityInversionMutex() {
     xSemaphoreTake(semaphore, portMAX_DELAY);
+
+    xTaskCreate(semaphore, "First", configMINIMAL_STACK_SIZE, "FirstThread", tskIDLE_PRIORITY+(1), &firstThread);
+    vTaskDelay(100);
+
+    xTaskCreate(semaphore2, "Second", configMINIMAL_STACK_SIZE, "SecondThread", tskIDLE_PRIORITY+(2), &secondThread);
+
     busy_wait_us(1000);
+    
     xSemaphoreGive(semaphore);
 
     semaphore = xSemaphoreCreateMutex();
